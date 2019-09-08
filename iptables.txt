@@ -1,0 +1,26 @@
+##===<< Clean Policy >>=======================================================
+    iptables -t filter -F
+    iptables -t filter -X
+    iptables -t filter -Z
+
+    ##===<< Set Policy >>=========================================================
+    iptables -t filter -P INPUT DROP
+    iptables -t filter -P OUTPUT ACCEPT
+    iptables -t filter -P FORWARD ACCEPT
+    
+    ##===<< Set Filter rules >>===================================================
+    iptables -A INPUT -p icmp -j ACCEPT
+    iptables -t filter -A INPUT -i lo -j ACCEPT
+    iptables -t filter -A INPUT -p all -m state --state INVALID -j DROP
+    iptables -t filter -A INPUT -p all -m state --state RELATED,ESTABLISHED -j ACCEPT
+    ##===<< Set Port rules >>=====================================================
+    iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT
+    iptables -A INPUT -s 172.0.0.0/8 -j ACCEPT
+    iptables -A INPUT -s 192.168.0.0/16 -j ACCEPT
+    iptables -A INPUT -s 220.248.44.98/32 -j ACCEPT
+    iptables -A INPUT -s 220.248.71.94/32 -j ACCEPT    
+    iptables -A INPUT -s 101.251.197.0/24 -j ACCEPT 
+    iptables -A INPUT -s 114.112.83.221/32 -j ACCEPT
+    iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT    
+    iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT    
+    iptables -A INPUT -p tcp -m tcp --dport 10000:30000 -j ACCEPT

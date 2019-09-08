@@ -1,0 +1,5 @@
+for i in `seq 30 135`;do
+    for j in `seq 254`;do
+	    ping -c 1 -W 1 32.113.$i.$j >/dev/null 2>/dev/null && echo "32.113.$i.$j alived" >> test/$i &
+    done;
+done;

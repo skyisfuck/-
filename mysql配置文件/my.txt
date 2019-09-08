@@ -1,0 +1,72 @@
+datadir = /mydata/data
+innodb_file_per_table = on
+skip_name_resolve = on
+character_set_server = utf8
+
+
+#开启后会将所有的死锁记录到error_log中 错误日志在my.cnf配置为log-error=/var/log/mysqld.log
+innodb_print_all_deadlocks = 1
+innodb_sort_buffer_size = 16M
+
+[mysqld] 
+slow_query_log = 1  #开启慢查询日志
+slow-query-log-file=/var/lib/mysql/slow.log  #这个路径对 mysql 用户具有可写权限 
+long_query_time=5  #查询超过 5 秒钟的语句记录下来
+log-queries-not-using-indexes =1  #没有使用索引的查询
+这三个设置一起使用，可以记录执行时间超过5 秒和没有使用索引的查询。请注意有关log-queries-not-using-indexes的警告。慢速查询日志都保存在/var/lib/mysql/slow.log。
+
+
+启动查询缓存： 
+vim /etc/my.cnf 添加： 
+[mysqld] #在此字段中添加 
+query_cache_size = 32M 
+
+
+
+
+## 主从配置
+log-bin=mysql-bin-master  #启用二进制日志
+server-id=1   #本机数据库ID 标示
+binlog-do-db=HA #可以被从服务器复制的库, 二进制需要同步的数据库名
+binlog-ignore-db=mysql  #不可以被从服务器复制的库
+binlog-format=mixed
+
+
+#### slave上配置只读，在配置文件/etc/my.cnf中的mysqld中配置read_only=1
+注意：read_only=1只读模式，可以限定普通用户进行数据修改的操作，但不会限定具有super权限的用户（如超级管理员root用户）的数据修改操作。
+如果想保证super用户也不能写操作，就可以就需要执行给所有的表加读锁的命令 “flush tables with read lock;”。
+
+
+授权：
+mysql> grant replication slave on *.* to slave@10.10.10.64  identified by "123456";
+查看状态信息：
+mysql> show master status;
+mysql> show binlog events\G
+
+
+
+
+#  修改从服务器配置文件：
+#   从服务器没必要开启bin-log日志
+server-id = 2  #从服务器ID号，不要和主ID相同 ，如果设置多个从服务器，每个从服务器必须有一个唯一的server-id值，必须与主服务器的以及其它从服务器的不相同。可以认为server-id值类似于IP地址：这些ID值能唯一识别复制服务器群集中的每个服务器实例。
+
+
+#下面三个是mysql 5.1的配置
+master-host=192.168.1.63 #指定主服务器IP地址
+master-user=slave  #指定定在主服务器上可以进行同步的用户名
+master-password=123456 #密码
+
+######另外版本配置
+mysql>stop slave;    #停止slave
+mysql> change master to master_host='10.10.10.63',master_user='slave',master_password='123456';
+mysql> start slave;    #启动slave
+
+
+mysql> show slave status\G  查看状态
+
+
+Slave_IO_Running ：一个负责与主机的io通信
+Slave_SQL_Running：负责自己的slave mysql进程
+两个为YES 就成功了！
+再到主服务器上查看状态：
+mysql> show processlist \G
